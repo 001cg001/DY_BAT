@@ -114,24 +114,24 @@ func (s *CommentServiceImpl) CommentList(ctx context.Context, req *comment.Douyi
 		msg = ""
 		resp.BaseResp.StatusCode = 0
 		resp.BaseResp.StatusMsg = &msg
-		resp.CommentList = &commentList
+		resp.CommentList = commentList
 	}
 	return resp, nil
 }
 
-func (s *CommentServiceImpl) GetList(videoId int64, userId int64) (comment.Comment, error) {
+func (s *CommentServiceImpl) GetList(videoId int64, userId int64) ([]*comment.Comment, error) {
 	//1.先查询评论列表信息
 	commentList, err := dao.GetCommentList(videoId)
 	if err != nil {
-		return comment.Comment{}, err
+		return nil, err
 	}
 	//当前有0条评论
 	if commentList == nil {
-		return comment.Comment{}, nil
+		return nil, nil
 	}
 
 	//提前定义好切片长度
-	commentInfoList := make([]comment.Comment, len(commentList))
+	commentInfoList := make([]*comment.Comment, len(commentList))
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(commentList))
@@ -142,7 +142,7 @@ func (s *CommentServiceImpl) GetList(videoId int64, userId int64) (comment.Comme
 		//将评论信息进行组装，添加想要的信息,插入从数据库中查到的数据
 		go func(comment dao.Comment) {
 			oneComment(&commentData, &comment)
-			commentInfoList[idx] = commentData
+			commentInfoList[idx] = &commentData
 			idx = idx + 1
 			wg.Done()
 		}(cmt)
@@ -154,7 +154,7 @@ func (s *CommentServiceImpl) GetList(videoId int64, userId int64) (comment.Comme
 	return commentInfoList, nil
 }
 
-//此函数用于给一个评论赋值：评论信息+用户信息 填充，应该不需要这个函数，
+// 此函数用于给一个评论赋值：评论信息+用户信息 填充
 func oneComment(cmt *comment.Comment, com *dao.Comment) {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -174,7 +174,7 @@ func oneComment(cmt *comment.Comment, com *dao.Comment) {
 }
 
 // CommentSlice 此变量以及以下三个函数都是做排序-准备工作
-type CommentSlice []comment.Comment
+type CommentSlice []*comment.Comment
 
 func (a CommentSlice) Len() int { //重写Len()方法
 	return len(a)

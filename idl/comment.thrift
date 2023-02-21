@@ -43,7 +43,7 @@ struct douyin_comment_list_request {
 
 struct douyin_comment_list_response {
     1: required BaseResp base_resp,
-    2: required Comment comment_list, // 评论列表
+    2: required list<Comment> comment_list, // 评论列表
 }
 
 service CommentService {

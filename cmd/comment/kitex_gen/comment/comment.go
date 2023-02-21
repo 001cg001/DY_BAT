@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-//查看评论-传出的结构体
 type Comment struct {
 	Id         int64  `thrift:"id,1,required" frugal:"1,required,i64" json:"id"`
 	User       *User  `thrift:"user,2,required" frugal:"2,required,User" json:"user"`
@@ -2031,8 +2030,8 @@ func (p *DouyinCommentListRequest) Field2DeepEqual(src int64) bool {
 }
 
 type DouyinCommentListResponse struct {
-	BaseResp    *BaseResp `thrift:"base_resp,1,required" frugal:"1,required,BaseResp" json:"base_resp"`
-	CommentList *Comment  `thrift:"comment_list,2,required" frugal:"2,required,Comment" json:"comment_list"`
+	BaseResp    *BaseResp  `thrift:"base_resp,1,required" frugal:"1,required,BaseResp" json:"base_resp"`
+	CommentList []*Comment `thrift:"comment_list,2,required" frugal:"2,required,list<Comment>" json:"comment_list"`
 }
 
 func NewDouyinCommentListResponse() *DouyinCommentListResponse {
@@ -2052,18 +2051,13 @@ func (p *DouyinCommentListResponse) GetBaseResp() (v *BaseResp) {
 	return p.BaseResp
 }
 
-var DouyinCommentListResponse_CommentList_DEFAULT *Comment
-
-func (p *DouyinCommentListResponse) GetCommentList() (v *Comment) {
-	if !p.IsSetCommentList() {
-		return DouyinCommentListResponse_CommentList_DEFAULT
-	}
+func (p *DouyinCommentListResponse) GetCommentList() (v []*Comment) {
 	return p.CommentList
 }
 func (p *DouyinCommentListResponse) SetBaseResp(val *BaseResp) {
 	p.BaseResp = val
 }
-func (p *DouyinCommentListResponse) SetCommentList(val *Comment) {
+func (p *DouyinCommentListResponse) SetCommentList(val []*Comment) {
 	p.CommentList = val
 }
 
@@ -2074,10 +2068,6 @@ var fieldIDToName_DouyinCommentListResponse = map[int16]string{
 
 func (p *DouyinCommentListResponse) IsSetBaseResp() bool {
 	return p.BaseResp != nil
-}
-
-func (p *DouyinCommentListResponse) IsSetCommentList() bool {
-	return p.CommentList != nil
 }
 
 func (p *DouyinCommentListResponse) Read(iprot thrift.TProtocol) (err error) {
@@ -2113,7 +2103,7 @@ func (p *DouyinCommentListResponse) Read(iprot thrift.TProtocol) (err error) {
 				}
 			}
 		case 2:
-			if fieldTypeId == thrift.STRUCT {
+			if fieldTypeId == thrift.LIST {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -2173,8 +2163,20 @@ func (p *DouyinCommentListResponse) ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *DouyinCommentListResponse) ReadField2(iprot thrift.TProtocol) error {
-	p.CommentList = NewComment()
-	if err := p.CommentList.Read(iprot); err != nil {
+	_, size, err := iprot.ReadListBegin()
+	if err != nil {
+		return err
+	}
+	p.CommentList = make([]*Comment, 0, size)
+	for i := 0; i < size; i++ {
+		_elem := NewComment()
+		if err := _elem.Read(iprot); err != nil {
+			return err
+		}
+
+		p.CommentList = append(p.CommentList, _elem)
+	}
+	if err := iprot.ReadListEnd(); err != nil {
 		return err
 	}
 	return nil
@@ -2231,10 +2233,18 @@ WriteFieldEndError:
 }
 
 func (p *DouyinCommentListResponse) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("comment_list", thrift.STRUCT, 2); err != nil {
+	if err = oprot.WriteFieldBegin("comment_list", thrift.LIST, 2); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.CommentList.Write(oprot); err != nil {
+	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.CommentList)); err != nil {
+		return err
+	}
+	for _, v := range p.CommentList {
+		if err := v.Write(oprot); err != nil {
+			return err
+		}
+	}
+	if err := oprot.WriteListEnd(); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -2276,10 +2286,16 @@ func (p *DouyinCommentListResponse) Field1DeepEqual(src *BaseResp) bool {
 	}
 	return true
 }
-func (p *DouyinCommentListResponse) Field2DeepEqual(src *Comment) bool {
+func (p *DouyinCommentListResponse) Field2DeepEqual(src []*Comment) bool {
 
-	if !p.CommentList.DeepEqual(src) {
+	if len(p.CommentList) != len(src) {
 		return false
+	}
+	for i, v := range p.CommentList {
+		_src := src[i]
+		if !v.DeepEqual(_src) {
+			return false
+		}
 	}
 	return true
 }
